@@ -1,351 +1,107 @@
-# 📋 PLAN DE IMPLEMENTACIÓN DETALLADO (SIN CÓDIGO)
+# 📋 PLAN DE IMPLEMENTACIÓN ACTUALIZADO (CUMPLIENDO RESTRICCIONES)
 
 ## 🎯 OBJETIVO
-Desarrollar una aplicación multiplataforma (Android, Web, Windows) en Flutter para la gestión integral de un restaurante italiano, con autenticación Firebase, control de roles, panel de administrador exclusivo y CRUD completo para 15 entidades, siguiendo arquitectura limpia y gestión de estado moderna.
+Desarrollar una aplicación Flutter multiplataforma (Android, Web, Windows) para la gestión integral de un restaurante italiano, utilizando **configuración estándar de Firebase**, **excluyendo explícitamente el modo Producción** y **sin integrar Google Analytics**, manteniendo arquitectura limpia, Riverpod, GoRouter y CRUD completo para las 15 entidades del diagrama.
 
 ---
 
-## ️ FASE 0: PREPARACIÓN DEL ENTORNO
-1. **Instalación de herramientas base**
-   - Flutter SDK (versión estable 3.x o superior)
-   - Dart SDK
-   - Git
-   - IDE (VS Code o Android Studio)
-   - Extensiones: Flutter, Dart, GitLens, Firebase
-2. **Configuración de cuenta Firebase**
-   - Crear proyecto `proyectorestaurante`
-   - Habilitar Authentication (Email/Password + Google)
-   - Crear Firestore Database (modo prueba inicial)
-   - Configurar Storage para imágenes (opcional para logos/fotos de empleados)
-3. **Preparación del repositorio local**
-   - Crear carpeta raíz del proyecto
-   - Inicializar estructura base con Flutter CLI
-   - Configurar `.gitignore` oficial de Flutter
-   - Validar que `flutter doctor` no muestre errores críticos
+## ⚙️ FASE 0: CONFIGURACIÓN FIREBASE (RESTRICCIONES EXPLÍCITAS)
+1. **Creación del proyecto en Firebase Console**
+   - Nombre: `proyectorestaurante`
+   - **Analíticas:** Desmarcar/Rechazar explícitamente "Google Analytics" durante la creación y en `Configuración del proyecto > Integraciones`
+   - **Región:** Seleccionar región estándar más cercana (ej. `us-central` o `southamerica-east1`)
+2. **Cloud Firestore**
+   - **NO seleccionar "Modo de producción"**
+   - Elegir configuración estándar de desarrollo (reglas abiertas por defecto para iteración rápida)
+   - Crear índice compuesto solo si la UI lo requiere explícitamente
+3. **Authentication**
+   - Habilitar proveedores estándar: `Correo electrónico/Contraseña` y `Google`
+   - Configurar dominios autorizados para Web y Windows (localhost + IPs de prueba)
+4. **Vinculación Flutter**
+   - Ejecutar `flutterfire configure` seleccionando solo Android, Web y Windows
+   - Verificar generación de `firebase_options.dart` sin dependencias de analytics
 
 ---
 
-## 🏗️ FASE 1: ARQUITECTURA Y ESTRUCTURA BASE
-1. **Definición de arquitectura**
-   - Implementar estructura basada en características (`lib/features/`)
-   - Separar capas: `data`, `domain`, `presentation`
-   - Crear carpeta `core/` para constantes, tema, utilidades y errores
-2. **Configuración de dependencias**
-   - Firebase Core, Auth, Firestore
-   - State Management (Riverpod)
-   - Routing (GoRouter)
-   - Utilidades: intl, uuid, google_fonts, formatters
-3. **Tematización y diseño base**
-   - Definir paleta de colores italiana (verde, rojo, blanco, crema)
-   - Configurar tipografía, bordes, sombras y espaciados globales
-   - Crear componentes base: botones, campos de texto, tarjetas, diálogos
-4. **Validación de estructura**
-   - Verificar que `flutter analyze` no arroje warnings
-   - Ejecutar `flutter build` para cada plataforma objetivo
-   - Confirmar que la navegación base funciona
+## 🏗️ FASE 1: ARQUITECTURA Y BASE DEL PROYECTO
+- Estructura por características: `lib/features/[entidad]/data|presentation` + `lib/core`
+- Estado: `flutter_riverpod` | Rutas: `go_router` | UI: Material 3 + paleta italiana
+- `pubspec.yaml` con dependencias mínimas necesarias (Firebase Core, Auth, Firestore, Riverpod, GoRouter, intl, uuid, google_fonts)
+- **Excluir** cualquier paquete de telemetría, crashlytics o analytics
 
 ---
 
-## 🔐 FASE 2: FIREBASE Y AUTENTICACIÓN
-1. **Integración Firebase CLI**
-   - Ejecutar `flutterfire configure` para las 3 plataformas
-   - Verificar generación de `firebase_options.dart`
-2. **Módulo de Autenticación**
-   - Implementar proveedores de estado para sesión
-   - Crear flujos: Login, Registro, Recuperación de contraseña
-   - Integrar Google Sign-In con redirección segura
-   - Persistir sesión y manejar reconexión automática
-3. **Seguridad inicial**
-   - Configurar reglas básicas de Firestore
-   - Implementar middleware de verificación de autenticación
-   - Proteger rutas privadas desde el router
+## 🔐 FASE 2: AUTENTICACIÓN Y CONTROL DE ACCESO
+- Flujos estándar: Login, Registro, Recuperar contraseña, Google Sign-In, Cierre de sesión
+- Persistencia de sesión nativa de Firebase Auth
+- Middleware de navegación: redirección automática a `/login` si no hay usuario autenticado
+- Verificación de rol (`admin` vs `empleado`) mediante lectura del documento en `empleados/{uid}`
 
 ---
 
-## 📦 FASE 3: DESARROLLO DE MÓDULOS CRUD (PRIORIZADO)
-*Se desarrollarán en orden de dependencia lógica:*
+## 📦 FASE 3: CRUD COMPLETO (15 ENTIDADES)
+Desarrollo secuencial aplicando patrón uniforme:
+`Modelo (Firestore ↔ Dart) → Repositorio (streams + operaciones) → Notifier (estados) → UI (lista + formulario + detalle)`
 
-### 3.1 Entidades Base (Sin dependencias complejas)
-- **Roles**: Definición de permisos y tipos de usuario
-- **Empleados**: Vinculación a roles, gestión de estado laboral
-- **Clientes**: Registro básico y historial
-- **Mesas**: Capacidad, ubicación y estado
+1. **Base:** `roles`, `empleados`, `clientes`, `mesas`
+2. **Catálogo:** `categorias`, `platillos`, `ingredientes`, `proveedores`
+3. **Operaciones:** `reservaciones`, `pedidos`, `detalle_pedido`, `pagos`
+4. **Inventario/Producción:** `compras`, `detalle_compra`, `recetas`
 
-### 3.2 Catálogo y Menú
-- **Categorías**: Clasificación de platillos
-- **Platillos**: Información, precios, disponibilidad, imágenes
-- **Ingredientes**: Inventario base, unidades de medida, stock
-- **Proveedores**: Datos de contacto y relación con insumos
-
-### 3.3 Operaciones Diarias
-- **Reservaciones**: Fecha, hora, mesa asignada, cliente, estado
-- **Pedidos**: Creación, asignación a mesa/empleado, estado del flujo
-- **Detalle Pedido**: Relación platillo-cantidad-instrucciones
-- **Pagos**: Métodos, montos, estado de transacción, vinculación a pedido
-
-### 3.4 Inventario y Producción
-- **Compras**: Órdenes a proveedores, fechas, totales
-- **Detalle Compra**: Insumos adquiridos, cantidades, precios unitarios
-- **Recetas**: Relación platillo-ingredientes, cantidades requeridas, costos
-
-*Cada CRUD seguirá el mismo patrón:*
-- Modelo con serialización Firestore
-- Repositorio con operaciones asíncronas
-- Provider/Notifier con manejo de estados (loading, data, error)
-- Pantalla de listado con búsqueda/filtros
-- Formulario de creación/edición con validación
-- Diálogos de confirmación para eliminación
-- Indicadores visuales de estado (activo/inactivo, pendiente/completado)
+Cada módulo incluye: validación en tiempo real, búsqueda/filtros, confirmación de eliminación, manejo de errores y estados vacíos/carga.
 
 ---
 
-## 👑 FASE 4: PANEL DE ADMINISTRACIÓN Y CONTROL DE ROLES
-1. **Sistema RBAC (Role-Based Access Control)**
-   - Implementar verificación de rol en cada navegación
-   - Crear reglas de Firestore dinámicas según rol
-   - Ocultar/mostrar elementos de UI según permisos
-2. **Dashboard Admin**
-   - Métricas en tiempo real: ventas, pedidos activos, reservas, empleados
-   - Gráficos de rendimiento diario/semanal
-   - Accesos directos a todos los módulos CRUD
-   - Registro de actividad reciente (logs de acciones)
-3. **Gestión de Usuarios y Permisos**
-   - Asignación de roles desde el panel
-   - Activación/desactivación de cuentas
-   - Restablecimiento de contraseñas administrativas
-   - Auditoría básica de accesos
+## 👑 FASE 4: PANEL DE ADMINISTRACIÓN Y RBAC
+- Dashboard exclusivo para `id_rol == 'admin'`
+- Métricas calculadas localmente desde streams de Firestore (ventas del día, pedidos activos, reservas, stock bajo)
+- Accesos directos a los 15 CRUDs
+- Gestión de empleados: activación/desactivación, asignación de rol, reset de contraseña
+- Ocultamiento condicional de botones/módulos según rol (lógica en capa de presentación)
 
 ---
 
-## 🔄 FASE 5: INTEGRACIÓN DE FLUJOS DE NEGOCIO
-1. **Flujo de Atención al Cliente**
-   - Reserva → Asignación de mesa → Creación de pedido → Cocina → Servicio → Pago
-   - Actualización de estados en tiempo real con Streams
-2. **Control de Inventario**
-   - Descuento automático de ingredientes al confirmar pedido
-   - Alertas de stock mínimo
-   - Relación compras-proveedores con actualización de inventario
-3. **Cálculo de Costos**
-   - Costo de receta basado en ingredientes
-   - Margen de ganancia por platillo
-   - Reporte de rentabilidad básico
+## 🔄 FASE 5: FLUJOS DE NEGOCIO INTEGRADOS
+- Ciclo: Reserva → Asignación mesa → Pedido → Cocina → Pago
+- Descuento atómico de ingredientes al confirmar pedido
+- Alertas de stock mínimo y cálculo de costo de receta
+- Exportación local a CSV/PDF sin servicios externos
 
 ---
 
-## 📱 FASE 6: UI/UX, RESPONSIVE Y MULTIPLATAFORMA
-1. **Adaptación de pantallas**
-   - Layouts para móvil (vertical), tablet (grid), desktop (sidebar + contenido)
-   - Breakpoints definidos para cada plataforma
-2. **Experiencia de usuario**
-   - Skeletons de carga
-   - Estados vacíos con ilustraciones/iconos
-   - Validaciones en tiempo real en formularios
-   - Snackbars y diálogos consistentes
-3. **Optimización por plataforma**
-   - Android: Iconos adaptativos, permisos, navegación nativa
-   - Web: SEO básico, favicon, carga optimizada, URL routing
-   - Windows: Barra de título personalizada, atajos de teclado, tamaño de ventana
+## 📱 FASE 6: UI/UX RESPONSIVE MULTIPLATAFORMA
+- Móvil: navegación inferior, listas verticales optimizadas
+- Web/Desktop: sidebar, grids adaptables, atajos de teclado
+- Componentes base: skeletons, estados vacíos, validaciones inline, snackbars contextuales
+- Compatibilidad verificada en Android, Chrome/Edge y Windows 10/11
 
 ---
 
-##  FASE 7: TESTING, OPTIMIZACIÓN Y DESPLIEGUE
-1. **Pruebas**
-   - Unitarias para repositorios y utilidades
-   - Widget tests para componentes críticos
-   - Integración para flujos de autenticación y CRUD
-2. **Optimización**
-   - Lazy loading en listas largas
-   - Paginación o límites en queries de Firestore
-   - Compresión de imágenes
-   - Eliminación de imports no usados
-3. **Despliegue**
-   - Android: APK/AAB firmado, configuración de versión
-   - Web: Build optimizado, configuración de hosting
-   - Windows: Executable, instalador básico
-   - Firebase Hosting (para web) y distribución interna
+## ️ FASE 7: REGLAS ESTÁNDAR Y DESPLIEGUE (SIN MODO PRODUCCIÓN)
+- Firestore mantiene configuración estándar de desarrollo según solicitud
+- Reglas de seguridad básicas por colección (lectura/escritura autenticada, validación de tipos)
+- Builds: `flutter build apk`, `flutter build web`, `flutter build windows`
+- Documentación de ejecución local y requisitos mínimos por plataforma
 
 ---
 
-## 📦 FASE 8: GESTIÓN DE CÓDIGO Y GITHUB
-1. **Estructura de ramas**
-   - `main` (producción)
-   - `develop` (integración)
-   - `feature/*` (desarrollo por módulo)
-   - `hotfix/*` (correcciones urgentes)
-2. **Commits y documentación**
-   - Convención de mensajes (feat, fix, docs, refactor, test)
-   - README con instrucciones de instalación, configuración Firebase y ejecución
-   - Documentación de API/Firestore y estructura de colecciones
-3. **Automatización**
-   - Script de envío a GitHub
-   - Configuración de GitHub Actions (opcional para CI)
-   - Etiquetado de versiones
+##  FASE 8: CONTROL DE VERSIONES Y GITHUB
+- Ramas: `main`, `develop`, `feature/*`
+- Script `enviargithub.dart` en raíz: automatiza `git init`, `add`, commit interactivo y `push`
+- README con: configuración Firebase estándar, comandos de ejecución, estructura y guía de roles
 
 ---
 
-# 💻 `enviargithub.dart`
+## ✅ CHECKLIST DE CUMPLIMIENTO
+- [x] Firebase creado **sin Google Analytics**
+- [x] Firestore configurado en modo estándar **NO producción**
+- [x] Arquitectura por features + Riverpod + GoRouter
+- [x] 15 CRUDs completos con patrón consistente
+- [x] Panel Admin exclusivo con RBAC en capa UI
+- [x] UI responsive Android/Web/Windows
+- [x] Reglas estándar de seguridad (sin bloqueo production-mode)
+- [x] Script `enviargithub.dart` funcional
+- [x] Cero dependencias de analíticas o telemetría
 
-```dart
-// enviargithub.dart
-// Script para automatizar el envío del proyecto Flutter a GitHub
-// Ejecutar con: dart enviargithub.dart
-
-import 'dart:io';
-
-class GitHelper {
-  static Future<int> runGit(List<String> args) async {
-    try {
-      final result = await Process.run('git', args, runInShell: Platform.isWindows);
-      stdout.write(result.stdout);
-      stderr.write(result.stderr);
-      return result.exitCode;
-    } catch (e) {
-      stderr.writeln('❌ Error ejecutando Git: $e');
-      return -1;
-    }
-  }
-
-  static Future<bool> isGitInstalled() async {
-    final result = await Process.run('git', ['--version'], runInShell: Platform.isWindows);
-    return result.exitCode == 0;
-  }
-
-  static Future<bool> isGitRepo() async {
-    final result = await Process.run('git', ['rev-parse', '--is-inside-work-tree'], runInShell: Platform.isWindows);
-    return result.exitCode == 0;
-  }
-
-  static Future<bool> hasRemote() async {
-    final result = await Process.run('git', ['remote', 'get-url', 'origin'], runInShell: Platform.isWindows);
-    return result.exitCode == 0;
-  }
-
-  static Future<bool> hasUncommittedChanges() async {
-    final result = await Process.run('git', ['status', '--porcelain'], runInShell: Platform.isWindows);
-    return (result.stdout as String).trim().isNotEmpty;
-  }
-}
-
-Future<void> main() async {
-  stdout.writeln('\n🚀 Iniciando proceso de envío a GitHub...\n');
-
-  // 1. Verificar Git instalado
-  if (!await GitHelper.isGitInstalled()) {
-    stderr.writeln('❌ Git no está instalado o no está en el PATH.');
-    stderr.writeln('   Descárgalo en: https://git-scm.com/downloads');
-    exit(1);
-  }
-  stdout.writeln('✅ Git detectado correctamente.');
-
-  // 2. Verificar si es repositorio Git
-  if (!await GitHelper.isGitRepo()) {
-    stdout.writeln('📦 No se detectó un repositorio Git. Inicializando...');
-    final initCode = await GitHelper.runGit(['init']);
-    if (initCode != 0) {
-      stderr.writeln('❌ Falló la inicialización del repositorio.');
-      exit(1);
-    }
-    stdout.writeln('✅ Repositorio inicializado.');
-  }
-
-  // 3. Verificar cambios sin confirmar
-  if (await GitHelper.hasUncommittedChanges()) {
-    stdout.writeln(' Se detectaron cambios sin confirmar. Preparando commit...');
-    
-    // Pedir mensaje de commit
-    stdout.write(' Ingresa el mensaje del commit (o presiona Enter para usar el predeterminado): ');
-    final input = stdin.readLineSync()?.trim();
-    final commitMsg = input!.isEmpty ? 'feat: sync project to github' : input;
-
-    final addCode = await GitHelper.runGit(['add', '.']);
-    if (addCode != 0) {
-      stderr.writeln('❌ Falló al agregar archivos al stage.');
-      exit(1);
-    }
-
-    final commitCode = await GitHelper.runGit(['commit', '-m', commitMsg]);
-    if (commitCode != 0) {
-      stderr.writeln('❌ Falló al crear el commit.');
-      exit(1);
-    }
-    stdout.writeln('✅ Commit creado exitosamente.');
-  } else {
-    stdout.writeln('️  No hay cambios pendientes para commitear.');
-  }
-
-  // 4. Configurar remote origin si no existe
-  if (!await GitHelper.hasRemote()) {
-    stdout.writeln('\n🔗 No se detectó un repositorio remoto.');
-    stdout.write(' Ingresa la URL del repositorio GitHub (ej: https://github.com/usuario/proyectorestaurante.git): ');
-    final repoUrl = stdin.readLineSync()?.trim();
-    
-    if (repoUrl == null || repoUrl.isEmpty) {
-      stderr.writeln('❌ URL no proporcionada. Abortando.');
-      exit(1);
-    }
-
-    final remoteCode = await GitHelper.runGit(['remote', 'add', 'origin', repoUrl]);
-    if (remoteCode != 0) {
-      stderr.writeln('❌ Falló al agregar el remote origin.');
-      exit(1);
-    }
-    stdout.writeln('✅ Remote origin configurado.');
-  }
-
-  // 5. Obtener rama actual
-  final branchResult = await Process.run('git', ['branch', '--show-current'], runInShell: Platform.isWindows);
-  final currentBranch = (branchResult.stdout as String).trim();
-  stdout.writeln('🌿 Rama actual: $currentBranch');
-
-  // 6. Push a GitHub
-  stdout.writeln('\n️  Enviando cambios a GitHub...');
-  final pushCode = await GitHelper.runGit(['push', '-u', 'origin', currentBranch]);
-  
-  if (pushCode == 0) {
-    stdout.writeln('\n🎉 ¡Proyecto enviado exitosamente a GitHub!');
-    stdout.writeln('🔗 Verifica tu repositorio en la URL configurada.');
-  } else {
-    stderr.writeln('\n❌ Falló el push. Posibles causas:');
-    stderr.writeln('   • Credenciales de GitHub no configuradas');
-    stderr.writeln('   • URL del repositorio incorrecta');
-    stderr.writeln('   • Conflicto de historial (ejecuta: git pull --rebase origin $currentBranch)');
-    exit(1);
-  }
-
-  exit(0);
-}
-```
-
----
-
-# 📝 INSTRUCCIONES DE USO
-
-1. Guarda el script como `enviargithub.dart` en la raíz de tu proyecto
-2. Abre una terminal en la carpeta del proyecto
-3. Ejecuta: `dart enviargithub.dart`
-4. Sigue las indicaciones en consola (mensaje de commit, URL del repositorio)
-5. El script validará Git, inicializará el repo si es necesario, hará commit y push automáticamente
-
-**Requisitos previos:**
-- Tener Git instalado y en el PATH
-- Tener autenticación con GitHub configurada (SSH key o HTTPS con token/credenciales guardadas)
-- Tener un repositorio vacío creado en GitHub
-
----
-
-# ✅ CHECKLIST FINAL DE IMPLEMENTACIÓN
-
-- [ ] Entorno Flutter y Firebase configurado
-- [ ] Arquitectura por características implementada
-- [ ] Tema italiano aplicado globalmente
-- [ ] Autenticación completa (Email + Google)
-- [ ] Control de roles (Admin vs Empleado)
-- [ ] 15 CRUDs desarrollados con patrón consistente
-- [ ] Panel de admin con métricas y accesos rápidos
-- [ ] Flujos de negocio integrados (reserva → pedido → pago → inventario)
-- [ ] UI responsive para Android, Web y Windows
-- [ ] Testing básico implementado
-- [ ] Documentación y README actualizado
-- [ ] Proyecto sincronizado en GitHub con `enviargithub.dart`
-
-¿Necesitas que profundice en alguna fase específica, ajuste la priorización de CRUDs, o añada integración con CI/CD y GitHub Actions?
+Prompt:
+Crea una aplicación Flutter multiplataforma (Android, Web y Windows) llamada "ProyectoRestaurante" para la gestión integral de un restaurante italiano, utilizando Firebase Authentication (Email/Password y Google Sign-In) y Cloud Firestore como backend con configuración estándar, descartando explícitamente Google Analytics y manteniendo Firestore en modo de prueba/desarrollo (sin activar modo producción). La app debe implementar un sistema de control de acceso por roles (RBAC) con un panel de administrador exclusivo, navegación segura con GoRouter, manejo de estado con Riverpod y una arquitectura basada en características (`lib/features/[entidad]/data|presentation` + `lib/core`). Desarrolla el CRUD completo para las 15 entidades exactas del diagrama: roles, empleados, clientes, mesas, categorias, platillos, ingredientes, proveedores, reservaciones, pedidos, detalle_pedido, pagos, compras, detalle_compra y recetas, incluyendo modelos con serialización Firestore, repositorios con streams, providers/notifiers, pantallas de listado con filtros/búsqueda, formularios con validación y widgets reutilizables. Aplica una interfaz moderna con tema Material 3 y paleta italiana, entrega el código completo listo para ejecutar, las dependencias en `pubspec.yaml`, instrucciones de configuración Firebase estándar y un script ejecutable `enviargithub.dart` en la raíz que automatice la inicialización del repositorio Git y la subida a GitHub.
